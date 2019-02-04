@@ -1,12 +1,15 @@
-package br.com.costalopes.isholiday.model;
+package br.com.costalopes.isholiday.service.to.countriesresponse;
 
-import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-public class HolidayResponse implements Serializable {
+import br.com.costalopes.isholiday.model.Holiday;
+import br.com.costalopes.isholiday.model.HolidayTypeCode;
+import br.com.costalopes.isholiday.service.to.HolidayResponse;
 
-	private static final long serialVersionUID = -2732197640003989733L;
+public class BrazilHolidayResponse extends HolidayResponse {
+
+	private static final long serialVersionUID = 193891302144515L;
 	
 	private String date;
 	private String name;
@@ -17,11 +20,11 @@ public class HolidayResponse implements Serializable {
 	private String type_code;
 	private transient static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-	public HolidayResponse() {
+	public BrazilHolidayResponse() {
 
 	}
 	
-	public HolidayResponse(String date, String name, String link, String type, String description, String raw_description,
+	public BrazilHolidayResponse(String date, String name, String link, String type, String description, String raw_description,
 			String type_code) {
 		super();
 		this.date = date;
@@ -95,6 +98,7 @@ public class HolidayResponse implements Serializable {
 				+ description + ", raw_description=" + raw_description + ", type_code=" + type_code + "]";
 	}
 	
+	@Override
 	public Holiday toHoliday() {
 		
 		Holiday holiday = new Holiday();
@@ -106,22 +110,20 @@ public class HolidayResponse implements Serializable {
 		
 		switch (Integer.valueOf(type_code)) {
 		case 1:
-			holiday.setTypeCode(HolidayTypeCode.FERIADO_NACIONAL);
+			holiday.setTypeCode(HolidayTypeCode.NATIONAL_HOLIDAY);
 			break;
 		case 2:
-			holiday.setTypeCode(HolidayTypeCode.FERIADO_ESTADUAL);
+			holiday.setTypeCode(HolidayTypeCode.STATE_HOLIDAY);
 			break;
 		case 3:
-			holiday.setTypeCode(HolidayTypeCode.FERIADO_MUNICIPAL);
+			holiday.setTypeCode(HolidayTypeCode.MUNICIPAL_HOLIDAY);
 			break;
 		case 4:
-			holiday.setTypeCode(HolidayTypeCode.PONTO_FACULTATIVO);
-			break;
-		case 9:
-			holiday.setTypeCode(HolidayTypeCode.FACULTATIVO);
+			holiday.setTypeCode(HolidayTypeCode.FACULTATIVE);
 			break;
 		default:
-			throw new IllegalArgumentException("type code [" + type_code + "] not valid!");
+			holiday.setTypeCode(HolidayTypeCode.OTHERS);
+			break;
 		}
 		
 		holiday.setDate(LocalDate.parse(date, DTF));

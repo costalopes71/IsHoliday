@@ -9,27 +9,29 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import br.com.costalopes.isholiday.model.Holiday;
 import br.com.costalopes.isholiday.service.HolidayService;
 
-public class IsHoliday {
+public abstract class IsHoliday implements IsHolidayInterface {
 
-	private LocalDate date;
-	private List<Holiday> holidays = new ArrayList<>();
-	private HolidayService service = new HolidayService();
-	private static final String WORKSPACE = createTempDir();
+	protected LocalDate date;
+	protected List<Holiday> holidays = new ArrayList<>();
+	protected HolidayService service;
+	protected static final String WORKSPACE = createTempDir();
 
-	public IsHoliday(LocalDate date, int ibgeCode) {
+	public IsHoliday(LocalDate date, HolidayService service) {
 		this.date = date;
-		buildHolidayList(ibgeCode);
+		this.service = service;
 	}
 	
+	@Override
 	public boolean isHoliday() {
 		for (Holiday holiday : holidays) {
 			if (holiday.getDate().equals(date))
@@ -38,29 +40,36 @@ public class IsHoliday {
 		return false;
 	}
 	
+	@Override
+	public Optional<List<Holiday>> getHoliday() {
+		List<Holiday> aux = holidays.stream().filter(holiday -> holiday.getDate().equals(date)).collect(Collectors.toList());
+
+		if (aux.size() == 0)
+			return Optional.empty();
+		else
+			return Optional.of(aux);
+		
+	}
+	
+	@Override
 	public IsHoliday changeDate(LocalDate newDate) {
 		this.date = newDate;
 		return this;
 	}
-	
-	private void buildHolidayList(int ibgeCode) {
 
-		Path ibgeBin = Paths.get(WORKSPACE + "/" + ibgeCode + "_" + date.getYear() + ".bin");
-		if (Files.exists(ibgeBin)) {
-			deserializeHolidays(ibgeBin);
-		} else {
-			try {
-				holidays = service.getHolidaysOfTheYear(ibgeCode, date.getYear());
-				serializeHolidays(ibgeBin);
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.out.println(e.getMessage());
-			}
-		}
-		
+	@Override
+	public List<Holiday> getNationalHolidays() {
+		// TODO Implementar
+		return null;
+	}
+
+	@Override
+	public int daysToNextHoliday() {
+		// TODO Implementar
+		return 0;
 	}
 	
-	private void serializeHolidays(Path binFile) {
+	protected void serializeHolidays(Path binFile) {
 		
 		try (OutputStream os = Files.newOutputStream(binFile, StandardOpenOption.CREATE);
 			 ObjectOutputStream oos = new ObjectOutputStream(os);)
@@ -80,7 +89,7 @@ public class IsHoliday {
 		
 	}
 
-	private void deserializeHolidays(Path binfile) {
+	protected void deserializeHolidays(Path binfile) {
 
 		try (InputStream is = Files.newInputStream(binfile, StandardOpenOption.READ);
 			 ObjectInputStream ois = new ObjectInputStream(is);) 
@@ -102,7 +111,7 @@ public class IsHoliday {
 
 	private static String createTempDir() {
 		
-		File workspace = new File("./binfiles/ibge_bin");
+		File workspace = new File("./binfiles/holidays");
 		
 		if (!workspace.exists())
 			workspace.mkdirs();
